@@ -8,10 +8,10 @@
 #include "main.h"
 #include "i2c_lcd.h"
 
-
+// some comment
 uint8_t i2cLcd_SendByte(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t data, uint8_t opts){
 	// Opts[0] - R/S select
-	// Opts[1] -initialization
+	// Opts[1] - initialization
 
 	HAL_StatusTypeDef hal_stat;
 	uint8_t i2c_frame_data[5];
@@ -154,7 +154,10 @@ uint8_t i2cLcd_Init(i2cLcd_HandleTypeDef * h_i2cLcd){
 
 	h_i2cLcd->function_set = FUNC_SET | FUNC_SET_DLEN_4B | FUNC_SET_LINES_2 | FUNC_SET_FO_5X8;
 	ret |= i2cLcd_SendByte(h_i2cLcd, h_i2cLcd->function_set, I2CLCD_OPTS_NOINIT);
-	HAL_Delay(1);
+
+	h_i2cLcd->diplay_ctrl = DISP_CTRL | DISP_CTRL_CURSOR_ON | DISP_CTRL_BLINK_ON | DISP_CTRL_DISPLAY_ON;
+	ret |= i2cLcd_SendByte(h_i2cLcd, h_i2cLcd->diplay_ctrl , I2CLCD_OPTS_NOINIT);
+
 	i2cLcd_ClearDisplay(h_i2cLcd);
 	HAL_Delay(5);
 	return ret;
