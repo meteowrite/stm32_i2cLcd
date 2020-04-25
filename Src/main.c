@@ -69,15 +69,10 @@ static void MX_I2C1_Init(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-	uint8_t i2c_addr = (0x20<<1);
+	uint8_t i2c_lcd_addr = (0x20<<1);
 	uint8_t strData[32] = "Simona <3\0";
 	uint8_t i;
 	uint8_t j;
-
-	uint32_t freq;
-	freq = HAL_RCC_GetSysClockFreq();
-
-	freq = 0;
 
 
   /* USER CODE END 1 */
@@ -107,37 +102,14 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  // crappy code
-  //_hi2c = &hi2c1;
-  //i2cLcd_Init(&hi2c1, i2c_addr);
 
-  //i2cLcd_SendByte( (1<<5)|(0<<4)|(1<<3)|(1<<2), 0, 1);
-  //i2cLcd_SendCmd(FUNC_SET | FONT_SEL | LINES | 0);
-  //i2cLcd_SendByte( (1<<3)|(1<<2)|(1<<1)|(1<<0), 0, 0);
-  //i2cLcd_SendByte( (1<<4), 0, 0);
-  //i2cLcd_SendByte( (1<<4), 0, 0);
-  //i2cLcd_SendByte( 1, 0, 0);
   HAL_Delay(100);
-  i2cLcd_CreateHandle(&h_lcd, &hi2c1, i2c_addr);
-  HAL_Delay(2);
+
+  i2cLcd_CreateHandle(&h_lcd, &hi2c1, i2c_lcd_addr);
+
   i2cLcd_Init(&h_lcd);
-  HAL_Delay(2);
+
   i2cLcd_ClearDisplay(&h_lcd);
-
-  for(i=0; i<8;i++)
-	  i2cLcd_SendChar(&h_lcd, 'C');
-
-  i2cLcd_SetPos(&h_lcd, 3);
-
-  i2cLcd_SetPos(&h_lcd, 44);
-
-  i2cLcd_SendChar(&h_lcd, 'C');
-  i2cLcd_SendByte(&h_lcd, DISP_CTRL | DISP_CTRL_CURSOR_ON | DISP_CTRL_BLINK_ON | DISP_CTRL_DISPLAY_ON, I2CLCD_OPTS_NOINIT);
-//  i2cLcd_SendByte(&h_lcd, FUNC_SET | FUNC_SET_DLEN_4B | FUNC_SET_FO_5X8 | FUNC_SET_LINES_2, I2CLCD_OPTS_NOINIT);
-  i2cLcd_SendChar(&h_lcd, 'Z');
-  i2cLcd_SendChar(&h_lcd, 'z');
-  //i2cLcd_SendByte(&h_lcd, FUNC_SET | FUNC_SET_DLEN_4B | FUNC_SET_FO_5X8 | FUNC_SET_LINES_2, I2CLCD_OPTS_NOINIT);
-
 
   i=0;
   j=0;
@@ -148,7 +120,7 @@ int main(void)
 	  sprintf(strData,"line1 text");
 	  while(strData[i]) {
 		  i2cLcd_SendChar(&h_lcd, strData[i]);
-		  HAL_Delay(100);
+		  //HAL_Delay(100);
 		  i++;
 	  }
 
@@ -157,19 +129,13 @@ int main(void)
 	  sprintf(strData,"line2 text");
 	  while(strData[i]) {
 		  i2cLcd_SendChar(&h_lcd, strData[i]);
-		  HAL_Delay(100);
+		  //HAL_Delay(100);
 		  i++;
 	  }
 
 	  i2cLcd_SendChar(&h_lcd, 0x7E);
 	  HAL_Delay(2000);
-	  //i2cLcd_RetHome();
-	  //HAL_Delay(1000);
-	  //i2cLcd_SendByte( 'z', 1, 0);
-	  //HAL_Delay(1000);
 
-	  //i2cLcd_ClearDisplay();
-	  //HAL_Delay(1000);
 	  i=0;
 	  j++;
     /* USER CODE END WHILE */
