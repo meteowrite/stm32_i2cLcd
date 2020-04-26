@@ -19,6 +19,7 @@ uint8_t i2cLcd_SendByte(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t data, uint8_t o
 	uint8_t wait_bf;
 	uint8_t i2c_frame_size;
 	uint8_t n;
+	uint8_t lcd_opts;
 
 	// Select between command/data frame
 	cmd = opts & I2CLCD_OPTS_RS;
@@ -38,19 +39,21 @@ uint8_t i2cLcd_SendByte(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t data, uint8_t o
 	// Add final all 1s on the 4 data bits to be able to read BF after a transaction
 	i2c_frame_size += wait_bf;
 
+	lcd_opts = (I2CLCD_RS & cmd) | (I2CLCD_BL & h_i2cLcd->blacklight) | (I2CLCD_E);
 
-	i2c_frame_data[0] = (data & 0xF0) | (I2CLCD_RS & cmd) | I2CLCD_BL | (I2CLCD_E);
+	i2c_frame_data[0] = (data & 0xF0) | lcd_opts;
 	i2c_frame_data[1] = i2c_frame_data[0] & (~I2CLCD_E);
 
-	i2c_frame_data[2] = ((data << 4) & 0xF0) | (I2CLCD_RS & cmd) | I2CLCD_BL | (I2CLCD_E);
+	i2c_frame_data[2] = ((data << 4) & 0xF0) | lcd_opts;
 	i2c_frame_data[3] = i2c_frame_data[2] & (~I2CLCD_E);
 
 	if(wait_bf)
 		i2c_frame_data[i2c_frame_size-1] = i2c_frame_data[i2c_frame_size-2] | 0x80;
 
 	// HAL transmits i2c_frame_data[0],[1], ... , i2c_frame_data[i2c_frame_size-1]
-	hal_stat = HAL_I2C_Master_Transmit(h_i2cLcd->hi2c, h_i2cLcd->i2c_addr, i2c_frame_data,
-										i2c_frame_size, 10);
+	//hal_stat = HAL_I2C_Master_Transmit(h_i2cLcd->hi2c, h_i2cLcd->i2c_addr, i2c_frame_data,
+	//									i2c_frame_size, 10);
+	hal_stat = i2cLcd_I2cWrite(h_i2cLcd, i2c_frame_data, i2c_frame_size);
 
 	//i2cLcd_WaitBusyFlag();
 	if (wait_bf) {
@@ -62,7 +65,7 @@ uint8_t i2cLcd_SendByte(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t data, uint8_t o
 		} while ( (n < I2CLCD_MAX_BF_POLLS) && (i2c_frame_data[0] & 0x80) );
 	}
 	else {
-		HAL_Delay(1);
+		i2cLcd_Delay_ms(1);
 	}
 
 	return (uint8_t) hal_stat;
@@ -139,18 +142,21 @@ uint8_t i2cLcd_Init(i2cLcd_HandleTypeDef * h_i2cLcd){
 	uint8_t ret;
 	h_i2cLcd->function_set = FUNC_SET | FUNC_SET_DLEN_8B;
 
+	// As per HD44780, if reset timing cannot be generated, initilization should be a sequence
+	// of 0x3 writes with specific delays afterwards
 	ret = 0;
 	ret |= i2cLcd_SendByte(h_i2cLcd, h_i2cLcd->function_set, I2CLCD_OPTS_INIT);
-	HAL_Delay(5);
+	i2cLcd_Delay_ms(5);
 	ret |= i2cLcd_SendByte(h_i2cLcd, h_i2cLcd->function_set, I2CLCD_OPTS_INIT);
-	HAL_Delay(1);
+	i2cLcd_Delay_ms(1);
 	ret |= i2cLcd_SendByte(h_i2cLcd, h_i2cLcd->function_set, I2CLCD_OPTS_INIT);
-	HAL_Delay(1);
+	i2cLcd_Delay_ms(1);
 
+	h_i2cLcd->blacklight = I2CLCD_BL;
 
 	h_i2cLcd->function_set = FUNC_SET | FUNC_SET_DLEN_4B;
 	ret |= i2cLcd_SendByte(h_i2cLcd, h_i2cLcd->function_set, I2CLCD_OPTS_INIT);
-	HAL_Delay(1);
+	i2cLcd_Delay_ms(1);
 
 	h_i2cLcd->function_set = FUNC_SET | FUNC_SET_DLEN_4B | FUNC_SET_LINES_2 | FUNC_SET_FO_5X8;
 	ret |= i2cLcd_SendByte(h_i2cLcd, h_i2cLcd->function_set, I2CLCD_OPTS_NOINIT);
@@ -159,7 +165,8 @@ uint8_t i2cLcd_Init(i2cLcd_HandleTypeDef * h_i2cLcd){
 	ret |= i2cLcd_SendByte(h_i2cLcd, h_i2cLcd->diplay_ctrl , I2CLCD_OPTS_NOINIT);
 
 	i2cLcd_ClearDisplay(h_i2cLcd);
-	HAL_Delay(5);
+
+	i2cLcd_Delay_ms(5);
 	return ret;
 }
 
@@ -190,8 +197,37 @@ uint8_t i2cLcd_CreateHandle(i2cLcd_HandleTypeDef *h_i2cLcd, I2C_HandleTypeDef *h
 	// Set slave address
 	h_i2cLcd->i2c_addr = i2c_slave_addr;
 
-	return HAL_I2C_Master_Transmit(h_i2cLcd->hi2c, h_i2cLcd->i2c_addr, &init_state, 1, 10);
+	//return HAL_I2C_Master_Transmit(h_i2cLcd->hi2c, h_i2cLcd->i2c_addr, &init_state, 1, 10);
+	return i2cLcd_I2cWrite(h_i2cLcd, &init_state, 1);
 }
 
+
+uint8_t i2cLcd_Backlight(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t backlight){
+	if (backlight){
+		h_i2cLcd->blacklight = I2CLCD_BL;
+	}
+	else{
+		h_i2cLcd->blacklight = 0;
+	}
+
+	return 0;
+}
+
+uint8_t i2cLcd_I2cWrite(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t * data, uint8_t len){
+
+	return HAL_I2C_Master_Transmit(h_i2cLcd->hi2c, h_i2cLcd->i2c_addr, data, len, 10);
+}
+
+uint8_t i2cLcd_I2cRead(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t * data, uint8_t len){
+
+	//return HAL_I2C_Master_Transmit(h_i2cLcd->hi2c, h_i2cLcd->i2c_addr, data, len, 10);
+	return 0;
+}
+
+uint8_t i2cLcd_Delay_ms(uint32_t delay_ms){
+	// Change the delay function call if HAL_ is not available
+	HAL_Delay(delay_ms);
+	return 0;
+}
 
 

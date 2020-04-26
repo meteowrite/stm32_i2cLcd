@@ -8,16 +8,20 @@
 #ifndef I2C_LCD_H_
 #define I2C_LCD_H_
 
-#define RS_SIGNAL_MASK			(1 << 0)
-#define RW_SIGNAL_MASK			(1 << 1)
-#define E_SIGNAL_MASK			(1 << 2)
-#define BL_SIGNAL_MASK			(1 << 3)
+#ifndef _BV
+	#define _BV(n) (1 << n)
+#endif
 
-#define I2CLCD_RS				(1 << 0)
-#define I2CLCD_RW				(1 << 1)
-#define I2CLCD_E				(1 << 2)
-#define I2CLCD_BL				(1 << 3)
+#define I2CLCD_RS_POS			(0)
+#define I2CLCD_RW_POS			(1)
+#define I2CLCD_E_POS			(2)
+#define I2CLCD_BL_POS			(3)
 
+
+#define I2CLCD_RS				(1 << I2CLCD_RS_POS)
+#define I2CLCD_RW				(1 << I2CLCD_RW_POS)
+#define I2CLCD_E				(1 << I2CLCD_E_POS)
+#define I2CLCD_BL				(1 << I2CLCD_BL_POS)
 
 // Defines for command access
 #define CLR_DISPLAY				(1<<0)
@@ -100,15 +104,29 @@ typedef struct i2cLcd_Stuct{
 
 
 uint8_t i2cLcd_CreateHandle(i2cLcd_HandleTypeDef *h_i2cLcd, I2C_HandleTypeDef *h_i2c, uint8_t i2c_slave_addr);
-uint8_t i2cLcd_ClearDisplay(i2cLcd_HandleTypeDef * h_i2cLcd);
-uint8_t i2cLcd_SendCmd(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t args);
-uint8_t i2cLcd_RetHome(i2cLcd_HandleTypeDef * h_i2cLcd);
 uint8_t i2cLcd_Init(i2cLcd_HandleTypeDef * h_i2cLcd);
 uint8_t i2cLcd_SendByte(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t data, uint8_t opts);
-uint8_t i2cLcd_WaitBusyFlag(i2cLcd_HandleTypeDef * h_i2cLcd);
+uint8_t i2cLcd_SendCmd(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t args);
+
+// User Calls
 uint8_t i2cLcd_SendChar(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t chr);
+uint8_t i2cLcd_RetHome(i2cLcd_HandleTypeDef * h_i2cLcd);
 uint8_t i2cLcd_SetPos(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t pos);
+uint8_t i2cLcd_ClearDisplay(i2cLcd_HandleTypeDef * h_i2cLcd);
+
+// Other features
+uint8_t i2cLcd_Backlight(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t backlight);
+
+// Unclear if needed
+uint8_t i2cLcd_WaitBusyFlag(i2cLcd_HandleTypeDef * h_i2cLcd);
 
 
+// User redefinition
+uint8_t i2cLcd_Delay_us(uint32_t delay_us);
+uint8_t i2cLcd_Delay_ms(uint32_t delay_ms);
+
+// Low level I2C access - user redefinition possible if std HAL_ functions not available
+uint8_t i2cLcd_I2cWrite(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t * data, uint8_t len);
+uint8_t i2cLcd_I2cRead(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t * data, uint8_t len);
 
 #endif /* I2C_LCD_H_ */
