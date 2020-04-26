@@ -8,7 +8,7 @@
 #include "main.h"
 #include "i2c_lcd.h"
 
-// some comment
+// Send byte or nibble to LCD module via PCF8574
 uint8_t i2cLcd_SendByte(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t data, uint8_t opts){
 	// Opts[0] - R/S select
 	// Opts[1] - initialization
@@ -27,7 +27,6 @@ uint8_t i2cLcd_SendByte(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t data, uint8_t o
 	// Toggle between waiting 1ms or poll Busy Flag
 	wait_bf = opts & I2CLCD_OPTS_WAIT_BF;
 
-
 	// Frame size for I2C communication.
 	if (opts & I2CLCD_OPTS_4B) {
 		i2c_frame_size = 2;
@@ -36,7 +35,7 @@ uint8_t i2cLcd_SendByte(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t data, uint8_t o
 		i2c_frame_size = 4;
 	}
 
-	// Add final all 1s on the 4 data bits to be able to read BF after a transaction
+	// Add final all 1s on the 4 data bits to be able to read BusyFlag after a transaction
 	i2c_frame_size += wait_bf;
 
 	lcd_opts = (I2CLCD_RS & cmd) | (I2CLCD_BL & h_i2cLcd->blacklight) | (I2CLCD_E);
@@ -47,12 +46,12 @@ uint8_t i2cLcd_SendByte(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t data, uint8_t o
 	i2c_frame_data[2] = ((data << 4) & 0xF0) | lcd_opts;
 	i2c_frame_data[3] = i2c_frame_data[2] & (~I2CLCD_E);
 
+
+	// Preferably remove this
 	if(wait_bf)
 		i2c_frame_data[i2c_frame_size-1] = i2c_frame_data[i2c_frame_size-2] | 0x80;
 
 	// HAL transmits i2c_frame_data[0],[1], ... , i2c_frame_data[i2c_frame_size-1]
-	//hal_stat = HAL_I2C_Master_Transmit(h_i2cLcd->hi2c, h_i2cLcd->i2c_addr, i2c_frame_data,
-	//									i2c_frame_size, 10);
 	hal_stat = i2cLcd_I2cWrite(h_i2cLcd, i2c_frame_data, i2c_frame_size);
 
 	//i2cLcd_WaitBusyFlag();
@@ -71,6 +70,54 @@ uint8_t i2cLcd_SendByte(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t data, uint8_t o
 	return (uint8_t) hal_stat;
 
 }
+
+
+uint8_t i2cLcd_ReadByte(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t * data){
+
+	HAL_StatusTypeDef hal_stat;
+	uint8_t i2c_frame_data[5];
+
+	uint8_t lcd_opts;
+
+	lcd_opts = (I2CLCD_BL & h_i2cLcd->blacklight) /*| (I2CLCD_E)*/ | (I2CLCD_RW);
+
+	// first need to write 0xF to data bits of PCF, E and R
+	i2c_frame_data[0] = (0xF0) | lcd_opts;
+	i2c_frame_data[1] = i2c_frame_data[0] | (I2CLCD_E);
+
+	i2c_frame_data[2] = 0;
+	i2c_frame_data[3] = 0;
+
+	// HAL receives i2c_frame_data[0],[1], ... , i2c_frame_data[i2c_frame_size-1]
+	hal_stat = i2cLcd_I2cWrite(h_i2cLcd, i2c_frame_data, 2);
+	hal_stat |= i2cLcd_I2cRead(h_i2cLcd, &i2c_frame_data[2], 1);
+
+	hal_stat |= i2cLcd_I2cWrite(h_i2cLcd, i2c_frame_data, 2);
+	hal_stat |= i2cLcd_I2cRead(h_i2cLcd, &i2c_frame_data[3], 1);
+
+	*data = (i2c_frame_data[2] & 0xF0) | ( (i2c_frame_data[3] >> 4) & 0x0F);
+
+	return (uint8_t) hal_stat;
+}
+
+
+
+uint8_t i2cLcd_SendChar(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t chr){
+
+	return i2cLcd_SendByte(h_i2cLcd, chr, I2CLCD_OPTS_DATA);
+}
+
+uint8_t i2cLcd_SendCmd(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t args){
+
+	return i2cLcd_SendByte(h_i2cLcd, args, I2CLCD_OPTS_COMMAND | I2CLCD_OPTS_NOINIT );
+}
+
+uint8_t i2cLcd_SendCmd_4b(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t args){
+
+	return i2cLcd_SendByte(h_i2cLcd, args, I2CLCD_OPTS_INIT );
+}
+
+
 
 
 
@@ -140,29 +187,27 @@ uint8_t i2cLcd_SendByte(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t data, uint8_t o
 
 uint8_t i2cLcd_Init(i2cLcd_HandleTypeDef * h_i2cLcd){
 	uint8_t ret;
+	ret = 0;
+
 	h_i2cLcd->function_set = FUNC_SET | FUNC_SET_DLEN_8B;
+	h_i2cLcd->blacklight = I2CLCD_BL;
 
 	// As per HD44780, if reset timing cannot be generated, initilization should be a sequence
 	// of 0x3 writes with specific delays afterwards
-	ret = 0;
-	ret |= i2cLcd_SendByte(h_i2cLcd, h_i2cLcd->function_set, I2CLCD_OPTS_INIT);
-	i2cLcd_Delay_ms(5);
-	ret |= i2cLcd_SendByte(h_i2cLcd, h_i2cLcd->function_set, I2CLCD_OPTS_INIT);
-	i2cLcd_Delay_ms(1);
-	ret |= i2cLcd_SendByte(h_i2cLcd, h_i2cLcd->function_set, I2CLCD_OPTS_INIT);
-	i2cLcd_Delay_ms(1);
 
-	h_i2cLcd->blacklight = I2CLCD_BL;
+	ret |= i2cLcd_SendCmd_4b(h_i2cLcd, h_i2cLcd->function_set);
+	i2cLcd_Delay_ms(4);
+	ret |= i2cLcd_SendCmd_4b(h_i2cLcd, h_i2cLcd->function_set);
+	ret |= i2cLcd_SendCmd_4b(h_i2cLcd, h_i2cLcd->function_set);
 
 	h_i2cLcd->function_set = FUNC_SET | FUNC_SET_DLEN_4B;
-	ret |= i2cLcd_SendByte(h_i2cLcd, h_i2cLcd->function_set, I2CLCD_OPTS_INIT);
-	i2cLcd_Delay_ms(1);
+	ret |= i2cLcd_SendCmd_4b(h_i2cLcd, h_i2cLcd->function_set);
 
 	h_i2cLcd->function_set = FUNC_SET | FUNC_SET_DLEN_4B | FUNC_SET_LINES_2 | FUNC_SET_FO_5X8;
-	ret |= i2cLcd_SendByte(h_i2cLcd, h_i2cLcd->function_set, I2CLCD_OPTS_NOINIT);
+	ret |= i2cLcd_SendCmd(h_i2cLcd, h_i2cLcd->function_set);
 
 	h_i2cLcd->diplay_ctrl = DISP_CTRL | DISP_CTRL_CURSOR_ON | DISP_CTRL_BLINK_ON | DISP_CTRL_DISPLAY_ON;
-	ret |= i2cLcd_SendByte(h_i2cLcd, h_i2cLcd->diplay_ctrl , I2CLCD_OPTS_NOINIT);
+	ret |= i2cLcd_SendCmd(h_i2cLcd, h_i2cLcd->diplay_ctrl);
 
 	i2cLcd_ClearDisplay(h_i2cLcd);
 
@@ -172,13 +217,13 @@ uint8_t i2cLcd_Init(i2cLcd_HandleTypeDef * h_i2cLcd){
 
 uint8_t i2cLcd_ClearDisplay(i2cLcd_HandleTypeDef * h_i2cLcd){
 
-	return i2cLcd_SendByte(h_i2cLcd, CLR_DISPLAY, 0);
+	//return i2cLcd_SendByte(h_i2cLcd, CLR_DISPLAY, 0);
+	return i2cLcd_SendCmd(h_i2cLcd, CLR_DISPLAY);
 }
 
-uint8_t i2cLcd_SendChar(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t chr){
 
-	return i2cLcd_SendByte(h_i2cLcd, chr, I2CLCD_OPTS_DATA);
-}
+
+
 
 uint8_t i2cLcd_SetPos(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t pos){
 	return i2cLcd_SendByte(h_i2cLcd, DDRAM_ADDR | pos, I2CLCD_OPTS_NOINIT);
@@ -220,8 +265,7 @@ uint8_t i2cLcd_I2cWrite(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t * data, uint8_t
 
 uint8_t i2cLcd_I2cRead(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t * data, uint8_t len){
 
-	//return HAL_I2C_Master_Transmit(h_i2cLcd->hi2c, h_i2cLcd->i2c_addr, data, len, 10);
-	return 0;
+	return HAL_I2C_Master_Receive(h_i2cLcd->hi2c, h_i2cLcd->i2c_addr, data, len, 10);
 }
 
 uint8_t i2cLcd_Delay_ms(uint32_t delay_ms){

@@ -80,9 +80,6 @@
 #define I2CLCD_OPTS_4B		I2CLCD_OPTS_INIT
 #define I2CLCD_OPTS_8B		I2CLCD_OPTS_NOINIT
 
-#define I2CLCD_OPTS_BL_OFF	(1<<2)
-#define I2CLCD_OPTS_BL_ON	(0)
-
 #define I2CLCD_OPTS_WAIT_BF	(1<<3)
 
 #define I2CLCD_MAX_BF_POLLS	127
@@ -108,6 +105,8 @@ uint8_t i2cLcd_Init(i2cLcd_HandleTypeDef * h_i2cLcd);
 uint8_t i2cLcd_SendByte(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t data, uint8_t opts);
 uint8_t i2cLcd_SendCmd(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t args);
 
+uint8_t i2cLcd_ReadByte(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t *data);
+
 // User Calls
 uint8_t i2cLcd_SendChar(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t chr);
 uint8_t i2cLcd_RetHome(i2cLcd_HandleTypeDef * h_i2cLcd);
@@ -116,6 +115,8 @@ uint8_t i2cLcd_ClearDisplay(i2cLcd_HandleTypeDef * h_i2cLcd);
 
 // Other features
 uint8_t i2cLcd_Backlight(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t backlight);
+uint8_t i2cLcd_DisplayCtrl(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t display_on,
+											uint8_t cursor, uint8_t blink_en);
 
 // Unclear if needed
 uint8_t i2cLcd_WaitBusyFlag(i2cLcd_HandleTypeDef * h_i2cLcd);
