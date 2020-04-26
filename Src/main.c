@@ -71,6 +71,7 @@ int main(void)
   /* USER CODE BEGIN 1 */
 	uint8_t i2c_lcd_addr = (0x20<<1);
 	char strData[32];
+	uint8_t data;
 	uint8_t i;
 	uint8_t j;
 
@@ -124,6 +125,9 @@ int main(void)
 		  //HAL_Delay(100);
 		  i++;
 	  }
+
+	  // test reading address cursor
+	  i2cLcd_ReadByte(&h_lcd, &data);
 
 	  i2cLcd_SetPos(&h_lcd, 0x40);
 	  i=0;
