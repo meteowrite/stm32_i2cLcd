@@ -70,7 +70,7 @@ int main(void)
 {
   /* USER CODE BEGIN 1 */
 	uint8_t i2c_lcd_addr = (0x20<<1);
-	uint8_t strData[32];
+	char strData[32];
 	uint8_t i;
 	uint8_t j;
 
@@ -96,12 +96,8 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_I2C1_Init();
+
   /* USER CODE BEGIN 2 */
-
-  /* USER CODE END 2 */
-
-  /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
 
   HAL_Delay(100);
 
@@ -113,6 +109,11 @@ int main(void)
 
   i=0;
   j=0;
+
+  /* USER CODE END 2 */
+
+  /* Infinite loop */
+  /* USER CODE BEGIN WHILE */
 
   while (1){
 	  i2cLcd_ClearDisplay(&h_lcd);
