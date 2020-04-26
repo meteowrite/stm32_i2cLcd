@@ -1,6 +1,7 @@
 # STM32 Liquid Crystal Display (LCD) via I2C driver
 
 Just a project with STM32F100 to interface an LCD display through PCF8574 over I2C. 
+![Greetings](/Resources/readme_logo.jpg)
 
 ## Files
 The entire project is implemented within [STM32CubeIDE](https://www.st.com/en/development-tools/stm32cubeide.html). 
@@ -19,4 +20,3 @@ Currently, the library functions for LCD control use the following HAL abstracti
 - Add moving/scrolling text
 - Add support for custom characters
 - Documentation!
-

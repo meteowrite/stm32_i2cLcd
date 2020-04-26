@@ -119,7 +119,7 @@ int main(void)
   while (1){
 	  i2cLcd_ClearDisplay(&h_lcd);
 	  HAL_Delay(20);
-	  sprintf(strData,"test line 1");
+	  sprintf(strData,"STM32F100");
 	  while(strData[i]) {
 		  i2cLcd_SendChar(&h_lcd, strData[i]);
 		  //HAL_Delay(100);
@@ -131,7 +131,7 @@ int main(void)
 
 	  i2cLcd_SetPos(&h_lcd, 0x40);
 	  i=0;
-	  sprintf(strData,"test line 2");
+	  sprintf(strData,"I2C LCD Library");
 	  while(strData[i]) {
 		  i2cLcd_SendChar(&h_lcd, strData[i]);
 		  //HAL_Delay(100);
