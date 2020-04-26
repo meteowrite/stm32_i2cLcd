@@ -70,7 +70,7 @@ int main(void)
 {
   /* USER CODE BEGIN 1 */
 	uint8_t i2c_lcd_addr = (0x20<<1);
-	uint8_t strData[32] = "Simona <3\0";
+	uint8_t strData[32];
 	uint8_t i;
 	uint8_t j;
 
@@ -117,7 +117,7 @@ int main(void)
   while (1){
 	  i2cLcd_ClearDisplay(&h_lcd);
 	  HAL_Delay(20);
-	  sprintf(strData,"line1 text");
+	  sprintf(strData,"test line 1");
 	  while(strData[i]) {
 		  i2cLcd_SendChar(&h_lcd, strData[i]);
 		  //HAL_Delay(100);
@@ -126,7 +126,7 @@ int main(void)
 
 	  i2cLcd_SetPos(&h_lcd, 0x40);
 	  i=0;
-	  sprintf(strData,"line2 text");
+	  sprintf(strData,"test line 2");
 	  while(strData[i]) {
 		  i2cLcd_SendChar(&h_lcd, strData[i]);
 		  //HAL_Delay(100);
