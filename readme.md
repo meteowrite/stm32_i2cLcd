@@ -21,3 +21,4 @@ Currently, the library functions for LCD control use the following HAL abstracti
 - Add support for custom characters
 - Documentation!
 - Include schematics and example code snippets
+- 
