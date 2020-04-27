@@ -46,7 +46,6 @@ uint8_t i2cLcd_SendByte(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t data, uint8_t o
 	i2c_frame_data[2] = ((data << 4) & 0xF0) | lcd_opts;
 	i2c_frame_data[3] = i2c_frame_data[2] & (~I2CLCD_E);
 
-
 	// Preferably remove this
 	if(wait_bf)
 		i2c_frame_data[i2c_frame_size-1] = i2c_frame_data[i2c_frame_size-2] | 0x80;
@@ -182,7 +181,15 @@ uint8_t i2cLcd_SendCmd_4b(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t args){
 //
 //}
 
+uint8_t i2cLcd_AutoScroll(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t autoscroll_en){
+	if (autoscroll_en) h_i2cLcd->entry_mode_set |= MODE_SET_INCR ;
+	else h_i2cLcd->entry_mode_set &= (~MODE_SET_INCR) ;
+	return i2cLcd_SendCmd(h_i2cLcd, h_i2cLcd->entry_mode_set );
+}
 
+uint8_t i2cLcd_RetHome(i2cLcd_HandleTypeDef * h_i2cLcd){
+	return i2cLcd_SendCmd(h_i2cLcd, RET_HOME );
+}
 
 
 uint8_t i2cLcd_Init(i2cLcd_HandleTypeDef * h_i2cLcd){
@@ -191,6 +198,7 @@ uint8_t i2cLcd_Init(i2cLcd_HandleTypeDef * h_i2cLcd){
 
 	h_i2cLcd->function_set = FUNC_SET | FUNC_SET_DLEN_8B;
 	h_i2cLcd->blacklight = I2CLCD_BL;
+	h_i2cLcd->entry_mode_set =  MODE_SET;
 
 	// As per HD44780, if reset timing cannot be generated, initilization should be a sequence
 	// of 0x3 writes with specific delays afterwards
@@ -220,8 +228,6 @@ uint8_t i2cLcd_ClearDisplay(i2cLcd_HandleTypeDef * h_i2cLcd){
 	//return i2cLcd_SendByte(h_i2cLcd, CLR_DISPLAY, 0);
 	return i2cLcd_SendCmd(h_i2cLcd, CLR_DISPLAY);
 }
-
-
 
 
 
@@ -258,6 +264,9 @@ uint8_t i2cLcd_Backlight(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t backlight){
 	return 0;
 }
 
+// Low level function wrappers
+// Can be
+
 uint8_t i2cLcd_I2cWrite(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t * data, uint8_t len){
 
 	return HAL_I2C_Master_Transmit(h_i2cLcd->hi2c, h_i2cLcd->i2c_addr, data, len, 10);
@@ -274,4 +283,15 @@ uint8_t i2cLcd_Delay_ms(uint32_t delay_ms){
 	return 0;
 }
 
+
+uint8_t i2cLcd_Delay_us(uint32_t delay_us){
+	// Change the delay function call if HAL_ is not available
+	// currently it delays a millisecond at minimum
+	uint32_t delay_ms;
+	delay_ms = (delay_us >> 10); // divide by 1024
+	if (delay_ms == 0) delay_ms = 1;
+
+	HAL_Delay(delay_us);
+	return 0;
+}
 

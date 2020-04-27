@@ -33,7 +33,7 @@
 #define GCRAM_ADDR				(1<<6)
 #define DDRAM_ADDR				(1<<7)
 
-#define MODE_SET_INCR			(1<<0)
+#define MODE_SET_INCR			(1<<1)
 #define MODE_SET_DECR			(0)
 #define MODE_SET_DISP_SHIFT_ON	(1<<0)
 #define MODE_SET_DISP_SHIFT_OFF	(0)
@@ -104,14 +104,16 @@ uint8_t i2cLcd_CreateHandle(i2cLcd_HandleTypeDef *h_i2cLcd, I2C_HandleTypeDef *h
 uint8_t i2cLcd_Init(i2cLcd_HandleTypeDef * h_i2cLcd);
 uint8_t i2cLcd_SendByte(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t data, uint8_t opts);
 uint8_t i2cLcd_SendCmd(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t args);
-
+uint8_t i2cLcd_SendCmd_4b(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t args);
 uint8_t i2cLcd_ReadByte(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t *data);
 
 // User Calls
 uint8_t i2cLcd_SendChar(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t chr);
-uint8_t i2cLcd_RetHome(i2cLcd_HandleTypeDef * h_i2cLcd);
 uint8_t i2cLcd_SetPos(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t pos);
 uint8_t i2cLcd_ClearDisplay(i2cLcd_HandleTypeDef * h_i2cLcd);
+uint8_t i2cLcd_RetHome(i2cLcd_HandleTypeDef * h_i2cLcd);
+
+uint8_t i2cLcd_AutoScroll(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t autoscroll_en);
 
 // Other features
 uint8_t i2cLcd_Backlight(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t backlight);
