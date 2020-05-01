@@ -30,7 +30,7 @@
 #define DISP_CTRL				(1<<3)
 #define CD_SHIFT				(1<<4)
 #define FUNC_SET				(1<<5)
-#define GCRAM_ADDR				(1<<6)
+#define CGRAM_ADDR				(1<<6)
 #define DDRAM_ADDR				(1<<7)
 
 #define MODE_SET_INCR			(1<<1)
@@ -71,20 +71,23 @@
 // opts[2]	0: Backlight On
 // opts[2]	1: Backlight Off
 
-#define I2CLCD_OPTS_RS		(1<<0)
-#define I2CLCD_OPTS_DATA	I2CLCD_OPTS_RS
-#define I2CLCD_OPTS_COMMAND	(0)
+#define I2CLCD_OPTS_RS			(1<<0)
+#define I2CLCD_OPTS_DATA		I2CLCD_OPTS_RS
+#define I2CLCD_OPTS_COMMAND		(0)
 
-#define I2CLCD_OPTS_INIT	(1<<1)
-#define I2CLCD_OPTS_NOINIT	(0)
-#define I2CLCD_OPTS_4B		I2CLCD_OPTS_INIT
-#define I2CLCD_OPTS_8B		I2CLCD_OPTS_NOINIT
+#define I2CLCD_OPTS_INIT		(1<<1)
+#define I2CLCD_OPTS_NOINIT		(0)
+#define I2CLCD_OPTS_4B			I2CLCD_OPTS_INIT
+#define I2CLCD_OPTS_8B			I2CLCD_OPTS_NOINIT
 
-#define I2CLCD_OPTS_WAIT_BF	(1<<3)
+#define I2CLCD_OPTS_WAIT_BF		(1<<3)
 
-#define I2CLCD_MAX_BF_POLLS	127
+#define I2CLCD_MAX_BF_POLLS		127
 
 #define DIR_INCR DIR_INCR_DECR & 0xFF
+
+#define I2CLCD_CGRAM_ADDR_POS	(3)
+
 
 typedef struct i2cLcd_Stuct{
 	I2C_HandleTypeDef *hi2c;
@@ -121,6 +124,9 @@ uint8_t i2cLcd_Shift(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t disp_or_cursor, ui
 // Other features
 uint8_t i2cLcd_Backlight(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t backlight);
 uint8_t i2cLcd_DisplayCtrl(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t display_on, uint8_t cursor, uint8_t blink_en);
+
+// custom character support
+uint8_t i2cLcd_WriteCustomChar(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t cgaddr, uint8_t * chardef);
 
 // Unclear if needed
 uint8_t i2cLcd_WaitBusyFlag(i2cLcd_HandleTypeDef * h_i2cLcd);

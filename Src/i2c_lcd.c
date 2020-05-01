@@ -181,13 +181,56 @@ uint8_t i2cLcd_SendCmd_4b(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t args){
 //
 //}
 
-uint8_t i2cLcd_AutoScroll(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t autoscroll_en){
-	if (autoscroll_en) h_i2cLcd->entry_mode_set |= MODE_SET_INCR ;
-	else h_i2cLcd->entry_mode_set &= (~MODE_SET_INCR) ;
+uint8_t i2cLcd_WriteCustomChar(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t cgaddr, uint8_t * chardef){
+	uint8_t i;
+	uint8_t hal_stat;
+	uint8_t _addr;
+
+	cgaddr = (cgaddr << 3);
+	hal_stat = 0;
+
+	// get the current DDRAM address
+	hal_stat |= i2cLcd_ReadByte(h_i2cLcd, &_addr );
+	_addr = _addr & 0x7F; // get
+
+	for(i=0; i<8; i++){
+		h_i2cLcd->cgram_addr = CGRAM_ADDR | (cgaddr | i);
+		hal_stat |= i2cLcd_SendCmd(h_i2cLcd, h_i2cLcd->cgram_addr );
+
+		hal_stat |= i2cLcd_SendChar(h_i2cLcd, chardef[i]);
+	}
+
+	// restore DDRAM address such that further writes are in DDRAM section
+	hal_stat |= i2cLcd_SetPos(h_i2cLcd, _addr);
+
+	return hal_stat;
+}
+
+
+
+uint8_t i2cLcd_EntryIncrEn(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t incr_en){
+	if (incr_en) h_i2cLcd->entry_mode_set |=  (DIR_INCR_DECR) ;
+	else h_i2cLcd->entry_mode_set &= ~(DIR_INCR_DECR) ;
 	return i2cLcd_SendCmd(h_i2cLcd, h_i2cLcd->entry_mode_set );
 }
 
-uint8_t i2cLcd_RetHome(i2cLcd_HandleTypeDef * h_i2cLcd){
+uint8_t i2cLcd_EntryShiftEn(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t shift_en){
+	if (shift_en) h_i2cLcd->entry_mode_set |=  (SHIFT) ;
+	else h_i2cLcd->entry_mode_set &= ~(SHIFT) ;
+	return i2cLcd_SendCmd(h_i2cLcd, h_i2cLcd->entry_mode_set );
+}
+
+
+uint8_t i2cLcd_Shift(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t disp_or_cursor, uint8_t right_left){
+	if (disp_or_cursor) h_i2cLcd->cursor_display_shift |= (CD_SHIFT_DSIPLAY) ;
+	else h_i2cLcd->cursor_display_shift &= ~(CD_SHIFT_DSIPLAY) ;
+	if (right_left) h_i2cLcd->cursor_display_shift |= (CD_SHIFT_RIGHT) ;
+	else h_i2cLcd->cursor_display_shift &= ~(CD_SHIFT_RIGHT) ;
+	return i2cLcd_SendCmd(h_i2cLcd, h_i2cLcd->cursor_display_shift );
+}
+
+
+uint8_t i2cLcd_ReturnHome(i2cLcd_HandleTypeDef * h_i2cLcd){
 	return i2cLcd_SendCmd(h_i2cLcd, RET_HOME );
 }
 
@@ -198,7 +241,8 @@ uint8_t i2cLcd_Init(i2cLcd_HandleTypeDef * h_i2cLcd){
 
 	h_i2cLcd->function_set = FUNC_SET | FUNC_SET_DLEN_8B;
 	h_i2cLcd->blacklight = I2CLCD_BL;
-	h_i2cLcd->entry_mode_set =  MODE_SET;
+	h_i2cLcd->entry_mode_set = MODE_SET ;
+	h_i2cLcd->cursor_display_shift = CD_SHIFT;
 
 	// As per HD44780, if reset timing cannot be generated, initilization should be a sequence
 	// of 0x3 writes with specific delays afterwards
@@ -216,6 +260,8 @@ uint8_t i2cLcd_Init(i2cLcd_HandleTypeDef * h_i2cLcd){
 
 	h_i2cLcd->diplay_ctrl = DISP_CTRL | DISP_CTRL_CURSOR_ON | DISP_CTRL_BLINK_ON | DISP_CTRL_DISPLAY_ON;
 	ret |= i2cLcd_SendCmd(h_i2cLcd, h_i2cLcd->diplay_ctrl);
+
+	ret |= i2cLcd_SendCmd(h_i2cLcd, h_i2cLcd->entry_mode_set);
 
 	i2cLcd_ClearDisplay(h_i2cLcd);
 
