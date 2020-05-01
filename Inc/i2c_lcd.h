@@ -91,7 +91,7 @@ typedef struct i2cLcd_Stuct{
 	uint8_t i2c_addr;
 	uint8_t entry_mode_set;
 	uint8_t diplay_ctrl;
-	uint8_t cursor_shift;
+	uint8_t cursor_display_shift;
 	uint8_t function_set;
 	uint8_t	cgram_addr;
 	uint8_t ddram_addr;
@@ -111,14 +111,16 @@ uint8_t i2cLcd_ReadByte(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t *data);
 uint8_t i2cLcd_SendChar(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t chr);
 uint8_t i2cLcd_SetPos(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t pos);
 uint8_t i2cLcd_ClearDisplay(i2cLcd_HandleTypeDef * h_i2cLcd);
-uint8_t i2cLcd_RetHome(i2cLcd_HandleTypeDef * h_i2cLcd);
+uint8_t i2cLcd_ReturnHome(i2cLcd_HandleTypeDef * h_i2cLcd);
 
-uint8_t i2cLcd_AutoScroll(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t autoscroll_en);
+uint8_t i2cLcd_EntryShiftEn(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t shift_en);
+uint8_t i2cLcd_EntryIncrEn(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t incr_en);
+
+uint8_t i2cLcd_Shift(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t disp_or_cursor, uint8_t right_left);
 
 // Other features
 uint8_t i2cLcd_Backlight(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t backlight);
-uint8_t i2cLcd_DisplayCtrl(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t display_on,
-											uint8_t cursor, uint8_t blink_en);
+uint8_t i2cLcd_DisplayCtrl(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t display_on, uint8_t cursor, uint8_t blink_en);
 
 // Unclear if needed
 uint8_t i2cLcd_WaitBusyFlag(i2cLcd_HandleTypeDef * h_i2cLcd);
