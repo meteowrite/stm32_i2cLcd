@@ -60,29 +60,73 @@ static void MX_I2C1_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-void test_some_features(i2cLcd_HandleTypeDef *h_lcd){
-	char text[32] = "Some very very long text\0";
+void print_long_text(i2cLcd_HandleTypeDef *h_lcd, char * text){
+	char txt[32] = "Some very very long text\0";
 	int i;
-
-	i2cLcd_SetPos(h_lcd, 40);
-
 	i=0;
+	if(text == NULL) {
+		text = txt;
+	}
+
 	while(text[i]){
 		i2cLcd_SendChar(h_lcd, text[i]);
 		i++;
 	}
-
-	i2cLcd_AutoScroll(h_lcd, 1);
-
-	HAL_Delay(3000);
-
-	i2cLcd_RetHome(h_lcd);
-
-	i2cLcd_AutoScroll(h_lcd, 0);
-
-	HAL_Delay(3000);
+}
 
 
+void test_some_features(i2cLcd_HandleTypeDef *h_lcd){
+	char text[32] = "Some very very long text\0";
+
+	i2cLcd_ClearDisplay(h_lcd);
+
+	i2cLcd_EntryIncrEn(h_lcd, 0);
+	i2cLcd_EntryShiftEn(h_lcd, 0);
+	print_long_text(h_lcd, "some long very text now\0");
+
+	i2cLcd_ClearDisplay(h_lcd);
+
+	i2cLcd_EntryIncrEn(h_lcd, 1);
+	i2cLcd_EntryShiftEn(h_lcd, 0);
+	print_long_text(h_lcd, "some long very text now\0");
+
+	i2cLcd_ClearDisplay(h_lcd);
+
+	i2cLcd_EntryIncrEn(h_lcd, 0);
+	i2cLcd_EntryShiftEn(h_lcd, 1);
+	print_long_text(h_lcd, "some long very text now\0");
+
+	i2cLcd_ClearDisplay(h_lcd);
+
+
+	i2cLcd_EntryIncrEn(h_lcd, 1);
+	i2cLcd_EntryShiftEn(h_lcd, 1);
+	print_long_text(h_lcd, "some long very text now\0");
+
+	i2cLcd_ClearDisplay(h_lcd);
+
+
+	i2cLcd_SetPos(h_lcd, 16);
+	i2cLcd_EntryIncrEn(h_lcd, 0);
+	i2cLcd_EntryShiftEn(h_lcd, 1);
+	print_long_text(h_lcd, "some long very text now\0");
+
+	i2cLcd_ClearDisplay(h_lcd);
+
+	i2cLcd_SetPos(h_lcd, 5);
+	i2cLcd_EntryIncrEn(h_lcd, 1);
+	i2cLcd_EntryShiftEn(h_lcd, 1);
+	print_long_text(h_lcd, "some long very text now\0");
+	print_long_text(h_lcd, "123456789abcdefghijklmop\0");
+
+	//i2cLcd_SetPos(h_lcd, 4);
+
+	i2cLcd_Shift(h_lcd,0,0);
+	i2cLcd_Shift(h_lcd,0,1);
+	i2cLcd_Shift(h_lcd,1,0);
+	i2cLcd_Shift(h_lcd,1,1);
+
+	i2cLcd_ClearDisplay(h_lcd);
 }
 
 
@@ -144,6 +188,8 @@ int main(void)
 
   test_some_features(&h_lcd);
 
+
+  i2cLcd_Init(&h_lcd);
 
   while (1){
 	  i2cLcd_ClearDisplay(&h_lcd);
