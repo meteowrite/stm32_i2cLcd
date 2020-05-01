@@ -75,6 +75,28 @@ void print_long_text(i2cLcd_HandleTypeDef *h_lcd, char * text){
 }
 
 
+uint8_t cchar1[8] ={ 0b00001000,
+					0b01110100,
+					0b01000010,
+					0b01000001,
+					0b01000010,
+					0b01000100,
+					0b01001000,
+					0b00000000
+};
+
+uint8_t cchar2[8] ={ 0b01000,
+					0b00000,
+					0b11111,
+					0b01010,
+					0b00100,
+					0b01010,
+					0b10001,
+					0b00000
+};
+
+
+
 void test_some_features(i2cLcd_HandleTypeDef *h_lcd){
 	char text[32] = "Some very very long text\0";
 
@@ -124,9 +146,30 @@ void test_some_features(i2cLcd_HandleTypeDef *h_lcd){
 	i2cLcd_Shift(h_lcd,0,0);
 	i2cLcd_Shift(h_lcd,0,1);
 	i2cLcd_Shift(h_lcd,1,0);
+
 	i2cLcd_Shift(h_lcd,1,1);
 
 	i2cLcd_ClearDisplay(h_lcd);
+
+	i2cLcd_Init(h_lcd);
+
+	// playing around with custom chars
+	i2cLcd_SendChar(h_lcd, 'a');
+	i2cLcd_SendChar(h_lcd, 0);
+	i2cLcd_SendChar(h_lcd, 1);
+
+	i2cLcd_WriteCustomChar(h_lcd, 1, cchar2);
+
+	i2cLcd_SendChar(h_lcd, 'a');
+
+
+	i2cLcd_SendChar(h_lcd, 0);
+
+	i2cLcd_WriteCustomChar(h_lcd, 0, cchar1);
+
+	i2cLcd_SendChar(h_lcd, 1);
+
+	i2cLcd_WriteCustomChar(h_lcd, 1, cchar1);
 }
 
 
@@ -185,6 +228,8 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+
+  HAL_Delay(500);
 
   test_some_features(&h_lcd);
 
