@@ -85,7 +85,7 @@ uint8_t cchar1[8] ={ 0b00001000,
 					0b00000000
 };
 
-uint8_t cchar2[8] ={ 0b01000,
+uint8_t cchar2[8] ={0b01000,
 					0b00000,
 					0b11111,
 					0b01010,
@@ -95,10 +95,47 @@ uint8_t cchar2[8] ={ 0b01000,
 					0b00000
 };
 
+uint8_t ch_smiley[8] ={	0b00000,
+						0b00000,
+						0b01010,
+						0b00000,
+						0b10001,
+						0b01110,
+						0b00000,
+						0b00000
+};
+uint8_t ch_sadley[8] ={	0b00000,
+						0b00000,
+						0b01010,
+						0b00000,
+						0b01110,
+						0b10001,
+						0b00000,
+						0b00000
+};
+uint8_t ch_hearty[8] ={	0b00000,
+						0b00000,
+						0b11011,
+						0b11111,
+						0b01110,
+						0b00100,
+						0b00000,
+						0b00000
+};
 
+uint8_t ch_skully[8] ={	0b00000,
+						0b01110,
+						0b10101,
+						0b11111,
+						0b11111,
+						0b01010,
+						0b01010,
+						0b00000
+};
 
 void test_some_features(i2cLcd_HandleTypeDef *h_lcd){
 	char text[32] = "Some very very long text\0";
+	uint8_t addr;
 
 	i2cLcd_ClearDisplay(h_lcd);
 
@@ -128,20 +165,20 @@ void test_some_features(i2cLcd_HandleTypeDef *h_lcd){
 	i2cLcd_ClearDisplay(h_lcd);
 
 
-	i2cLcd_SetPos(h_lcd, 16);
+	i2cLcd_SetCursorPosition(h_lcd, 16);
 	i2cLcd_EntryIncrEn(h_lcd, 0);
 	i2cLcd_EntryShiftEn(h_lcd, 1);
 	print_long_text(h_lcd, "some long very text now\0");
 
 	i2cLcd_ClearDisplay(h_lcd);
 
-	i2cLcd_SetPos(h_lcd, 5);
+	i2cLcd_SetCursorPosition(h_lcd, 5);
 	i2cLcd_EntryIncrEn(h_lcd, 1);
 	i2cLcd_EntryShiftEn(h_lcd, 1);
 	print_long_text(h_lcd, "some long very text now\0");
 	print_long_text(h_lcd, "123456789abcdefghijklmop\0");
 
-	//i2cLcd_SetPos(h_lcd, 4);
+	//i2cLcd_SetCursorPosition(h_lcd, 4);
 
 	i2cLcd_Shift(h_lcd,0,0);
 	i2cLcd_Shift(h_lcd,0,1);
@@ -169,7 +206,27 @@ void test_some_features(i2cLcd_HandleTypeDef *h_lcd){
 
 	i2cLcd_SendChar(h_lcd, 1);
 
-	i2cLcd_WriteCustomChar(h_lcd, 1, cchar1);
+
+
+	i2cLcd_ClearDisplay(h_lcd);
+	print_long_text(h_lcd, "Custom character\0");
+
+	i2cLcd_SetCursorPosition(h_lcd, 40);
+	i2cLcd_SendChar(h_lcd, 'z');
+	i2cLcd_WriteCustomChar(h_lcd, 0, ch_smiley);
+	i2cLcd_WriteCustomChar(h_lcd, 1, ch_sadley);
+	i2cLcd_WriteCustomChar(h_lcd, 2, ch_hearty);
+	i2cLcd_WriteCustomChar(h_lcd, 3, ch_skully);
+	i2cLcd_SendChar(h_lcd, 0);
+	i2cLcd_SendChar(h_lcd, 1);
+	i2cLcd_SendChar(h_lcd, 2);
+	i2cLcd_SendChar(h_lcd, 3);
+
+	addr = 0;
+	i2cLcd_GetCursorPosition(h_lcd, &addr);
+
+
+
 }
 
 
@@ -249,7 +306,7 @@ int main(void)
 	  // test reading address cursor
 	  i2cLcd_ReadByte(&h_lcd, &data);
 
-	  i2cLcd_SetPos(&h_lcd, 0x40);
+	  i2cLcd_SetCursorPosition(&h_lcd, 0x40);
 	  i=0;
 	  sprintf(strData,"I2C LCD Library");
 	  while(strData[i]) {
