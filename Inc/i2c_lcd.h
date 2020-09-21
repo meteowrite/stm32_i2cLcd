@@ -5,6 +5,8 @@
  *      Author: dit
  */
 
+#include "main.h"
+
 #ifndef I2C_LCD_H_
 #define I2C_LCD_H_
 
@@ -117,8 +119,8 @@ uint8_t i2cLcd_ClearDisplay(i2cLcd_HandleTypeDef * h_i2cLcd);
 uint8_t i2cLcd_ReturnHome(i2cLcd_HandleTypeDef * h_i2cLcd);
 uint8_t i2cLcd_SetCursorPosition(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t pos);
 uint8_t i2cLcd_GetCursorPosition(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t * pos);
-
-
+uint8_t i2cLcd_Blink(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t blink_en);
+uint8_t i2cLcd_Cursor(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t cursor_en);
 
 uint8_t i2cLcd_EntryShiftEn(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t shift_en);
 uint8_t i2cLcd_EntryIncrEn(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t incr_en);

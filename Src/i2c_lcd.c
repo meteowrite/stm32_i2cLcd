@@ -120,67 +120,6 @@ uint8_t i2cLcd_SendCmd_4b(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t args){
 
 
 
-//uint8_t i2cLcd_WaitBusyFlag(){
-//	HAL_StatusTypeDef hal_stat;
-//
-//	uint8_t i;
-//	uint8_t r_bf[4];
-//	uint8_t rd[2];
-//	uint8_t bf;
-//	uint8_t ac;
-//
-//	i = 0;
-//	do {
-//		//r_bf[0] =  RW_SIGNAL_MASK| E_SIGNAL_MASK | BL_SIGNAL_MASK;
-//		//r_bf[1] =  r_bf[0] & (~E_SIGNAL_MASK); // generate negedge on E
-//
-//		r_bf[0] = (0xF0) | ( BL_SIGNAL_MASK | E_SIGNAL_MASK | RW_SIGNAL_MASK); // no RS`
-//		r_bf[1] = r_bf[0] & (~E_SIGNAL_MASK); // generate negedge on E
-//		r_bf[2] = r_bf[0];
-//		r_bf[3] = r_bf[0] & (~RW_SIGNAL_MASK);
-//
-//		hal_stat  = HAL_I2C_Master_Transmit(_hi2c, _i2c_addr, &r_bf[1], 2, 10);
-//		hal_stat |= HAL_I2C_Master_Receive(_hi2c, _i2c_addr, &rd[0], 1, 10);
-//
-//		hal_stat |= HAL_I2C_Master_Transmit(_hi2c, _i2c_addr, &r_bf[1], 2, 10);
-//		hal_stat |= HAL_I2C_Master_Receive(_hi2c, _i2c_addr, &rd[1], 1, 10);
-//
-//		//hal_stat |= HAL_I2C_Master_Transmit(_hi2c, _i2c_addr, &r_bf[3], 1, 10);
-//
-//		bf = 0x80 & rd[0];
-//		ac = (0x70 & rd[0]) | ((0xF0 & rd[1])>>4) ;
-//		i++;
-//	} while (bf);
-//
-//	return hal_stat;
-//
-//}
-
-
-
-
-//uint8_t i2cLcd_SendCmd(uint8_t args){
-//	return i2cLcd_SendByte(args, 0, 0);
-//}
-//
-//uint8_t i2cLcd_ClearDisplay(){
-//	return i2cLcd_SendCmd(CLR_DISPLAY);
-//}
-//
-//uint8_t i2cLcd_RetHome(){
-//	return i2cLcd_SendCmd(RET_HOME);
-//}
-//
-//
-//uint8_t i2cLcd_Init(i2cLcd_TypeDef *i2c, I2C_HandleTypeDef *){
-//
-//	_i2c_addr = i2c_addr;
-//
-//	// Very first initialization
-//	i2cLcd_SendByte(FUNC_SET, 0, 1);
-//
-//}
-
 uint8_t i2cLcd_WriteCustomChar(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t cgaddr, uint8_t * chardef){
 	uint8_t i;
 	uint8_t hal_stat;
@@ -190,8 +129,7 @@ uint8_t i2cLcd_WriteCustomChar(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t cgaddr, 
 	hal_stat = 0;
 
 	// get the current DDRAM address
-	hal_stat |= i2cLcd_ReadByte(h_i2cLcd, &_addr );
-	_addr = _addr & 0x7F; // get
+	hal_stat |= i2cLcd_GetCursorPosition(h_i2cLcd, &_addr);
 
 	for(i=0; i<8; i++){
 		h_i2cLcd->cgram_addr = CGRAM_ADDR | (cgaddr | i);
@@ -201,7 +139,7 @@ uint8_t i2cLcd_WriteCustomChar(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t cgaddr, 
 	}
 
 	// restore DDRAM address such that further writes are in DDRAM section
-	hal_stat |= i2cLcd_SetPos(h_i2cLcd, _addr);
+	hal_stat |= i2cLcd_SetCursorPosition(h_i2cLcd, _addr);
 
 	return hal_stat;
 }
@@ -229,10 +167,18 @@ uint8_t i2cLcd_Shift(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t disp_or_cursor, ui
 	return i2cLcd_SendCmd(h_i2cLcd, h_i2cLcd->cursor_display_shift );
 }
 
-
-uint8_t i2cLcd_ReturnHome(i2cLcd_HandleTypeDef * h_i2cLcd){
-	return i2cLcd_SendCmd(h_i2cLcd, RET_HOME );
+uint8_t i2cLcd_Blink(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t blink_en){
+	if (blink_en) h_i2cLcd->diplay_ctrl |= DISP_CTRL_BLINK_ON;
+	else h_i2cLcd->diplay_ctrl &= ~(DISP_CTRL_BLINK_ON);
+	return i2cLcd_SendCmd(h_i2cLcd, h_i2cLcd->diplay_ctrl );
 }
+
+uint8_t i2cLcd_Cursor(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t cursor_en){
+	if (cursor_en) h_i2cLcd->diplay_ctrl |= (DISP_CTRL_CURSOR_ON);
+	else h_i2cLcd->diplay_ctrl &= ~(DISP_CTRL_CURSOR_ON);
+	return i2cLcd_SendCmd(h_i2cLcd, h_i2cLcd->diplay_ctrl );
+}
+
 
 
 uint8_t i2cLcd_Init(i2cLcd_HandleTypeDef * h_i2cLcd){
@@ -269,6 +215,8 @@ uint8_t i2cLcd_Init(i2cLcd_HandleTypeDef * h_i2cLcd){
 	return ret;
 }
 
+
+
 uint8_t i2cLcd_ClearDisplay(i2cLcd_HandleTypeDef * h_i2cLcd){
 
 	//return i2cLcd_SendByte(h_i2cLcd, CLR_DISPLAY, 0);
@@ -276,9 +224,20 @@ uint8_t i2cLcd_ClearDisplay(i2cLcd_HandleTypeDef * h_i2cLcd){
 }
 
 
+uint8_t i2cLcd_ReturnHome(i2cLcd_HandleTypeDef * h_i2cLcd){
+	return i2cLcd_SendCmd(h_i2cLcd, RET_HOME );
+}
 
-uint8_t i2cLcd_SetPos(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t pos){
+
+uint8_t i2cLcd_SetCursorPosition(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t pos){
 	return i2cLcd_SendByte(h_i2cLcd, DDRAM_ADDR | pos, I2CLCD_OPTS_NOINIT);
+}
+
+uint8_t i2cLcd_GetCursorPosition(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t * pos){
+	uint8_t hal_stat;
+	hal_stat = i2cLcd_ReadByte(h_i2cLcd, pos );
+	*pos = *pos & 0x7F;
+	return hal_stat;
 }
 
 uint8_t i2cLcd_CreateHandle(i2cLcd_HandleTypeDef *h_i2cLcd, I2C_HandleTypeDef *h_i2c, uint8_t i2c_slave_addr){
@@ -309,6 +268,8 @@ uint8_t i2cLcd_Backlight(i2cLcd_HandleTypeDef * h_i2cLcd, uint8_t backlight){
 
 	return 0;
 }
+
+
 
 // Low level function wrappers
 // Can be
